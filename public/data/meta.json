@@ -1,0 +1,236 @@
+{
+  "generated": "2026-08-23T18:40:27.575Z",
+  "completeThroughSeason": 2025,
+  "completeThroughLabel": "2024-25",
+  "provisionalSeasons": [
+    2026
+  ],
+  "satelliteEraStart": 1982,
+  "severeHpa": 970,
+  "pressureClasses": [
+    {
+      "id": "extreme",
+      "label": "Below 930 hPa",
+      "max": 930
+    },
+    {
+      "id": "severe",
+      "label": "930 to 955 hPa",
+      "max": 955
+    },
+    {
+      "id": "strong",
+      "label": "955 to 970 hPa",
+      "max": 970
+    },
+    {
+      "id": "moderate",
+      "label": "970 to 990 hPa",
+      "max": 990
+    },
+    {
+      "id": "weak",
+      "label": "Above 990 hPa",
+      "max": null
+    }
+  ],
+  "counts": {
+    "systems": 1632,
+    "tropical": 1284,
+    "named": 798,
+    "distinctNames": 592,
+    "points": 97378,
+    "crossings": 716,
+    "seasons": 127,
+    "withRadii": 257
+  },
+  "firstSeasonLabel": "1880-81",
+  "trend": {
+    "from": 1982,
+    "to": 2025,
+    "countPerDecade": -0.57,
+    "severePerDecade": -0.57
+  },
+  "eras": [
+    {
+      "from": 1982,
+      "to": 1996,
+      "label": "1982-96",
+      "seasons": 15,
+      "storms": 211,
+      "perSeason": 14.07,
+      "measured": 170,
+      "coverage": 80.6,
+      "severe": 87,
+      "severePerSeason": 5.8,
+      "severeShareOfMeasured": 51.2,
+      "medianMinPressure": 970
+    },
+    {
+      "from": 1997,
+      "to": 2011,
+      "label": "1997-11",
+      "seasons": 15,
+      "storms": 208,
+      "perSeason": 13.87,
+      "measured": 171,
+      "coverage": 82.2,
+      "severe": 65,
+      "severePerSeason": 4.33,
+      "severeShareOfMeasured": 38,
+      "medianMinPressure": 980
+    },
+    {
+      "from": 2012,
+      "to": 2025,
+      "label": "2012-25",
+      "seasons": 14,
+      "storms": 175,
+      "perSeason": 12.5,
+      "measured": 160,
+      "coverage": 91.4,
+      "severe": 53,
+      "severePerSeason": 3.79,
+      "severeShareOfMeasured": 33.1,
+      "medianMinPressure": 985
+    }
+  ],
+  "source": {
+    "ibtracs": {
+      "publisher": "NOAA National Centers for Environmental Information",
+      "product": "IBTrACS v04r01",
+      "licence": "Open — WMO Resolution 40; citation required",
+      "citation": "Gahtan, J., K. R. Knapp, C. J. Schreck III, H. J. Diamond, J. P. Kossin, M. C. Kruk (2024). International Best Track Archive for Climate Stewardship (IBTrACS) Project, Version 4.01, Southern Indian and South Pacific basins. NOAA National Centers for Environmental Information.",
+      "paper": "Knapp, K. R., M. C. Kruk, D. H. Levinson, H. J. Diamond, and C. J. Neumann, 2010: The International Best Track Archive for Climate Stewardship (IBTrACS): Unifying tropical cyclone best track data. Bulletin of the American Meteorological Society, 91, 363-376. doi:10.1175/2009BAMS2755.1",
+      "originatingAgency": "Australian Bureau of Meteorology (Regional Specialised Meteorological Centre for the Australian region), via IBTrACS",
+      "homepage": "https://www.ncei.noaa.gov/products/international-best-track-archive"
+    },
+    "boundaries": {
+      "publisher": "Australian Bureau of Statistics",
+      "product": "ASGS state and territory boundaries (simplified)",
+      "licence": "CC BY 4.0"
+    }
+  },
+  "gates": [
+    {
+      "name": "anchor:Gwenda",
+      "pass": true,
+      "detail": "deepest Gwenda = 900 hPa, expected 900",
+      "advisory": false
+    },
+    {
+      "name": "anchor:George",
+      "pass": true,
+      "detail": "deepest George = 902 hPa, expected 902",
+      "advisory": false
+    },
+    {
+      "name": "anchor:Orson",
+      "pass": true,
+      "detail": "deepest Orson = 905 hPa, expected 905",
+      "advisory": false
+    },
+    {
+      "name": "anchor:Marcus",
+      "pass": true,
+      "detail": "deepest Marcus = 905 hPa, expected 905",
+      "advisory": false
+    },
+    {
+      "name": "anchor:Yasi",
+      "pass": true,
+      "detail": "deepest Yasi = 929 hPa, expected 929",
+      "advisory": false
+    },
+    {
+      "name": "anchor:Tracy",
+      "pass": true,
+      "detail": "deepest Tracy = 950 hPa, expected 950",
+      "advisory": false
+    },
+    {
+      "name": "region:all points in 90-160E southern hemisphere",
+      "pass": true,
+      "detail": "0 stray points",
+      "advisory": false
+    },
+    {
+      "name": "coords:finite",
+      "pass": true,
+      "detail": "0 non-finite coordinates",
+      "advisory": false
+    },
+    {
+      "name": "coords:no antimeridian jump",
+      "pass": true,
+      "detail": "largest step 4.2 degrees",
+      "advisory": false
+    },
+    {
+      "name": "season:Tracy is labelled 1974-75",
+      "pass": true,
+      "detail": "Tracy season label = 1974-75",
+      "advisory": false
+    },
+    {
+      "name": "reconcile:season counts sum to tropical storms",
+      "pass": true,
+      "detail": "seasons sum 1284 vs tropical storms 1284",
+      "advisory": false
+    },
+    {
+      "name": "severity:severe subset of measured",
+      "pass": true,
+      "detail": "0 impossible seasons",
+      "advisory": false
+    },
+    {
+      "name": "provisional:analysed record ends on a measured season",
+      "pass": true,
+      "detail": "last analysed season 2024-25 has 15 measured of 16",
+      "advisory": false
+    },
+    {
+      "name": "provisional:excluded seasons really are unanalysed",
+      "pass": true,
+      "detail": "0 season(s) held back as provisional",
+      "advisory": false
+    },
+    {
+      "name": "headline:pressure coverage did not fall",
+      "pass": true,
+      "detail": "coverage 80.6% (1982-96) -> 91.4% (2012-2025)",
+      "advisory": false
+    },
+    {
+      "name": "coast:crossings assigned to a state",
+      "pass": true,
+      "detail": "676 of 716 crossings located (94.4%)",
+      "advisory": false
+    },
+    {
+      "name": "reconcile:state crossings sum to located crossings",
+      "pass": true,
+      "detail": "state table 676 vs located 676",
+      "advisory": false
+    },
+    {
+      "name": "scale:storms",
+      "pass": true,
+      "detail": "1632 systems",
+      "advisory": false
+    },
+    {
+      "name": "scale:points",
+      "pass": true,
+      "detail": "97378 track points",
+      "advisory": false
+    },
+    {
+      "name": "scale:seasons",
+      "pass": true,
+      "detail": "127 seasons with a tropical cyclone",
+      "advisory": false
+    }
+  ]
+}

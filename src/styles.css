@@ -1,0 +1,542 @@
+/* SPDX-FileCopyrightText: 2026 Ben Richardson
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Cyclone Tracks — a hazard reference, not a monitoring console.
+ *
+ * The palette is deliberately light and calm. Someone checking whether an approaching storm
+ * resembles Yasi should feel like they are reading the Bureau, not a security dashboard, and
+ * warning-red is reserved for the single chart that exists to be argued with.
+ */
+
+/* ── MANDATORY: the [hidden] guard ───────────────────────────────────────────────────────
+ * An author rule like `.overlay-panel{display:flex}` OUTRANKS the browser's
+ * `[hidden]{display:none}` — author origin beats the UA stylesheet regardless of
+ * specificity. Without this line, anything hidden by ATTRIBUTE renders from first paint and
+ * `el.hidden = true` in JavaScript does nothing at all. That shipped a modal elsewhere in
+ * this fleet that could not be dismissed by its ✕, by its scrim, OR by Escape — every
+ * handler fired correctly and none could take effect. Must come before any component rule. */
+[hidden] { display: none !important; }
+
+:root {
+  /* Light theme — warm off-white paper, ocean teal, sand. */
+  --bg-base: #fbfaf7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f4f2ed;
+  --bg-panel: #ffffff;
+  --bg-hover: #eef4f5;
+  --bg-active: #dfeaed;
+
+  --border-subtle: #e6e2d9;
+  --border-default: #d3cec2;
+  --border-strong: #a9a294;
+
+  --text-primary: #1d2b30;
+  --text-secondary: #4d5c62;
+  --text-tertiary: #7b8890;
+  --text-muted: #a3adb3;
+
+  --accent-primary: #0d6e8c;
+  --accent-primary-hover: #0a566e;
+  --accent-secondary: #b4552d;
+
+  --status-good: #2f7d54;
+  --status-warn: #a8721c;
+  --status-bad: #a53f2b;
+  --status-info: #0d6e8c;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-size-xs: 0.6875rem;
+  --font-size-sm: 0.75rem;
+  --font-size-base: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.125rem;
+  --font-size-2xl: 1.5rem;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+
+  --header-height: 52px;
+
+  /* ── Stacking order ──────────────────────────────────────────────────────────────────
+   * Leaflet gives its own panes and controls z-index values up to 1000. Unless the map
+   * container establishes its own stacking context those children escape to the page root
+   * and paint OVER modals — which is how an About panel once shipped rendering underneath a
+   * map. Every overlay layer here therefore clears 1000, and the sticky header sits BELOW
+   * the overlay layer so a drawer is never trapped under it. */
+  --z-header: 900;
+  --z-scrim: 2000;
+  --z-panel: 2100;
+  --z-tooltip: 2300;
+  --z-popover: 2400;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-base: #10171a;
+    --bg-surface: #161f23;
+    --bg-elevated: #1d282d;
+    --bg-panel: #161f23;
+    --bg-hover: #223037;
+    --bg-active: #2b3d45;
+
+    --border-subtle: #263338;
+    --border-default: #34454c;
+    --border-strong: #4d6169;
+
+    --text-primary: #e8eef0;
+    --text-secondary: #a8b8bf;
+    --text-tertiary: #7b8d95;
+    --text-muted: #5c6d75;
+
+    --accent-primary: #4fb3d1;
+    --accent-primary-hover: #6cc6e0;
+    --accent-secondary: #e08a5c;
+
+    --status-good: #5aba82;
+    --status-warn: #d3a24c;
+    --status-bad: #dd7a63;
+    --status-info: #4fb3d1;
+  }
+}
+
+/* The viewer's theme toggle stamps data-theme on the root and must win in both directions. */
+:root[data-theme='dark'] {
+  --bg-base: #10171a;
+  --bg-surface: #161f23;
+  --bg-elevated: #1d282d;
+  --bg-panel: #161f23;
+  --bg-hover: #223037;
+  --bg-active: #2b3d45;
+  --border-subtle: #263338;
+  --border-default: #34454c;
+  --border-strong: #4d6169;
+  --text-primary: #e8eef0;
+  --text-secondary: #a8b8bf;
+  --text-tertiary: #7b8d95;
+  --text-muted: #5c6d75;
+  --accent-primary: #4fb3d1;
+  --accent-primary-hover: #6cc6e0;
+  --accent-secondary: #e08a5c;
+}
+:root[data-theme='light'] {
+  --bg-base: #fbfaf7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f4f2ed;
+  --bg-panel: #ffffff;
+  --bg-hover: #eef4f5;
+  --bg-active: #dfeaed;
+  --border-subtle: #e6e2d9;
+  --border-default: #d3cec2;
+  --border-strong: #a9a294;
+  --text-primary: #1d2b30;
+  --text-secondary: #4d5c62;
+  --text-tertiary: #7b8890;
+  --text-muted: #a3adb3;
+  --accent-primary: #0d6e8c;
+  --accent-primary-hover: #0a566e;
+  --accent-secondary: #b4552d;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--bg-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* `clip`, never `hidden`: overflow-x: hidden makes the nearest ancestor a scroll container
+   * and silently kills `position: sticky` on the header. `clip` cuts the overflow without
+   * creating a scrollport. */
+  overflow-x: clip;
+}
+
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+.main-content { flex: 1 0 auto; width: 100%; max-width: 1600px; margin: 0 auto; padding: var(--space-lg); }
+.site-footer { flex-shrink: 0; }
+
+/* ── Header ──────────────────────────────────────────────────────────────────────────── */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.header-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: var(--space-sm); min-width: 0; }
+.brand-name { font-size: var(--font-size-lg); font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; }
+.brand-sub { font-size: var(--font-size-xs); color: var(--text-tertiary); white-space: nowrap; }
+.header-spacer { flex: 1 1 auto; }
+
+.search-wrap { position: relative; flex: 0 1 260px; min-width: 0; }
+.search-input {
+  width: 100%;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 6px 10px 6px 28px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+.search-input:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+.search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; font-size: var(--font-size-sm); }
+.search-results {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  max-height: 320px; overflow-y: auto;
+  z-index: var(--z-popover);
+}
+.search-result {
+  display: flex; align-items: center; gap: var(--space-sm);
+  width: 100%; text-align: left; border: 0; background: none;
+  font: inherit; font-size: var(--font-size-sm);
+  padding: 7px 10px; cursor: pointer; color: var(--text-primary);
+  min-width: 0;
+}
+.search-result:hover, .search-result:focus-visible { background: var(--bg-hover); }
+.search-result-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-result-meta { flex-shrink: 0; font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-tertiary); }
+
+/* ── Nav tabs — WORDS ONLY, never a count badge ───────────────────────────────────────── */
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  border: 0; background: none; font: inherit; font-size: var(--font-size-sm); font-weight: 500;
+  color: var(--text-secondary); padding: 7px 11px; border-radius: var(--radius-sm);
+  cursor: pointer; white-space: nowrap; transition: background var(--transition-fast), color var(--transition-fast);
+}
+.tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.tab[aria-current='page'] { background: var(--bg-active); color: var(--accent-primary); font-weight: 620; }
+.tab:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+
+.icon-button {
+  border: 1px solid var(--border-default); background: var(--bg-base);
+  color: var(--text-secondary); width: 30px; height: 30px; border-radius: 50%;
+  cursor: pointer; font-size: var(--font-size-base); line-height: 1; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.icon-button:hover { background: var(--bg-hover); color: var(--accent-primary); }
+.icon-button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+
+/* ── Panels ──────────────────────────────────────────────────────────────────────────── */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+.panel-head { margin-bottom: var(--space-md); }
+.panel-title { font-size: var(--font-size-xl); font-weight: 640; letter-spacing: -0.01em; }
+.panel-sub { font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 2px; max-width: 78ch; }
+.panel-note { font-size: var(--font-size-sm); color: var(--text-tertiary); margin-top: var(--space-md); max-width: 78ch; }
+
+.view-intro { margin-bottom: var(--space-lg); }
+.view-title { font-size: var(--font-size-2xl); font-weight: 680; letter-spacing: -0.02em; }
+.view-lede { font-size: var(--font-size-base); color: var(--text-secondary); margin-top: var(--space-xs); max-width: 82ch; }
+
+/* Stat tiles. `minmax(0, …)` not a bare 1fr — `1fr` is `minmax(auto, 1fr)` and the auto
+ * minimum lets a long value force the whole page to scroll sideways on a phone. */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg); }
+.stat {
+  background: var(--bg-panel); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); padding: var(--space-md); min-width: 0;
+}
+.stat-value { font-family: var(--font-mono); font-size: var(--font-size-xl); font-weight: 600; color: var(--text-primary); }
+.stat-label { font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: 2px; }
+
+/* ── Wide content scrolls inside its own container, never the page ────────────────────── */
+.x-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.chart { min-width: 520px; display: block; }
+.matrix { min-width: 560px; display: block; }
+.scatter { min-width: 480px; display: block; }
+.treemap { min-width: 480px; display: block; }
+
+/* ── Tables ──────────────────────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.data-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: var(--font-size-sm); }
+/* NOTE: thead is deliberately NOT position:sticky. `overflow-x: auto` on .table-wrap makes it
+ * a scrollport, which captures the sticky element and parks the header mid-table instead of
+ * at the top of the viewport. */
+.data-table thead th {
+  /* No text-transform: uppercase. It would turn a unit like "≤10.0 µm" into "≤10.0 MM" —
+   * a factor of a thousand introduced by CSS alone. */
+  text-align: left; font-weight: 620; font-size: var(--font-size-xs);
+  color: var(--text-secondary); background: var(--bg-elevated);
+  padding: 8px 10px; border-bottom: 1px solid var(--border-default); white-space: nowrap;
+}
+.data-table td { padding: 7px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+.data-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--bg-elevated) 45%, transparent); }
+.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table .n { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+.sortable { cursor: pointer; user-select: none; }
+.sortable:hover { color: var(--accent-primary); }
+.sort-caret { color: var(--accent-primary); }
+
+.row-button {
+  border: 0; background: none; font: inherit; color: var(--accent-primary);
+  cursor: pointer; padding: 0; text-align: left; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+.row-button:hover { text-decoration: underline; }
+.row-button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+
+/* ── Bars ────────────────────────────────────────────────────────────────────────────── */
+.bar-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: var(--space-sm); align-items: center; padding: 3px 0; }
+.bar-label {
+  /* min-width: 0 is what stops a nowrap label forcing the grid track — and therefore the
+   * page — wider than the viewport. This is the commonest cause of mobile overflow. */
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--font-size-sm); color: var(--text-secondary);
+}
+.bar-track { background: var(--bg-elevated); border-radius: 3px; height: 15px; overflow: hidden; min-width: 0; }
+.bar-fill {
+  /* display: block is not optional. A width percentage on a bare inline <span> renders
+   * nothing at all — inline boxes ignore width — so the whole view looks empty. */
+  display: block; height: 100%; border-radius: 3px; transition: width var(--transition-normal);
+}
+.bar-value { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-secondary); flex-shrink: 0; white-space: nowrap; }
+
+/* ── Legend ──────────────────────────────────────────────────────────────────────────── */
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-top: var(--space-md); font-size: var(--font-size-xs); color: var(--text-secondary); }
+.legend-item { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgb(0 0 0 / 12%); }
+.legend-button { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 4px; border-radius: var(--radius-sm); }
+.legend-button:hover { background: var(--bg-hover); }
+.legend-button[aria-pressed='false'] { opacity: 0.4; }
+.legend-button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+
+/* ── Filters ─────────────────────────────────────────────────────────────────────────── */
+.filter-bar { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: flex-end; margin-bottom: var(--space-md); }
+.field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.field-label { font-size: var(--font-size-xs); color: var(--text-tertiary); }
+.field select, .field input[type='range'] { font: inherit; font-size: var(--font-size-sm); }
+.field select {
+  padding: 5px 8px; border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  background: var(--bg-base); color: var(--text-primary); max-width: 100%;
+}
+.field select:focus-visible, .field input:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+.toggle-group { display: inline-flex; border: 1px solid var(--border-default); border-radius: var(--radius-sm); overflow: hidden; }
+.toggle-group button { border: 0; background: var(--bg-base); font: inherit; font-size: var(--font-size-sm); padding: 5px 10px; cursor: pointer; color: var(--text-secondary); }
+.toggle-group button[aria-pressed='true'] { background: var(--accent-primary); color: #fff; }
+.toggle-group button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
+
+/* ── Map ─────────────────────────────────────────────────────────────────────────────── */
+.map-frame {
+  /* isolation + z-index 0 + position relative CONTAINS Leaflet's internal panes, which run to
+   * z-index 1000 and would otherwise escape to the page root and paint over every modal. */
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+/* The Australian region is about 74 degrees wide by 44 tall — roughly 1.7:1. `fitBounds`
+ * zooms out until BOTH dimensions fit, so a short wide container makes the map show far more
+ * longitude than asked for: at 2.4:1 the "Australian region" view reached the coast of Africa.
+ * Keeping the frame near the region's own aspect ratio makes the fit width-limited instead. */
+.map-canvas {
+  width: 100%;
+  /* Sized by ASPECT, not by viewport height. The Australian region is about 74 degrees wide
+   * by 44 tall (~1.7:1), and Leaflet's fitBounds zooms out until both dimensions fit — so a
+   * short wide frame silently shows far more longitude than asked for. At 2.4:1 the
+   * "Australian region" view reached the coast of Africa. A vh-based height looks fine on a
+   * tall display and breaks on a short one; an aspect ratio is correct on both. */
+  aspect-ratio: 1.7 / 1;
+  max-height: 80vh;
+  min-height: 400px;
+  background: var(--bg-elevated);
+}
+.map-tip { font-size: var(--font-size-xs); }
+.map-hint { font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: var(--space-sm); }
+
+/* ── SVG chart furniture ─────────────────────────────────────────────────────────────── */
+.axis-line { stroke: var(--border-default); stroke-width: 1; }
+.axis-label { fill: var(--text-tertiary); font-size: 10px; font-family: var(--font-sans); }
+.grid-line { stroke: var(--border-subtle); stroke-width: 1; }
+.series-label { fill: var(--text-secondary); font-size: 11px; font-family: var(--font-sans); }
+.mark { transition: opacity var(--transition-fast); cursor: pointer; }
+.mark:hover { opacity: 0.75; }
+.mark-static { cursor: default; }
+
+.svg-zoom-controls { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; z-index: 2; }
+.svg-zoom-controls button {
+  width: 26px; height: 26px; border: 1px solid var(--border-default);
+  background: var(--bg-surface); color: var(--text-secondary);
+  border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm); line-height: 1;
+}
+.svg-zoom-controls button:hover { background: var(--bg-hover); color: var(--accent-primary); }
+.zoomable-wrap { position: relative; }
+
+/* ── Tooltip — BOTH rules are required ───────────────────────────────────────────────────
+ * initTooltip() shows and hides purely by toggling `visible`. Define .hover-tip without
+ * .hover-tip.visible and the tooltip is painted on the first hover and never hidden again:
+ * it simply follows the pointer around the page. Nothing errors and no handler test sees it. */
+.hover-tip {
+  position: fixed; z-index: var(--z-tooltip); pointer-events: none;
+  background: var(--text-primary); color: var(--bg-surface);
+  font-size: var(--font-size-xs); line-height: 1.45;
+  padding: 6px 9px; border-radius: var(--radius-sm);
+  max-width: 300px; white-space: pre-line;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
+  opacity: 0; transition: opacity 110ms ease;
+}
+.hover-tip.visible { opacity: 1; }
+
+/* ── Overlays: scrim + panel ─────────────────────────────────────────────────────────── */
+#overlay-host { position: relative; }
+.overlay-scrim {
+  position: fixed; inset: 0; z-index: var(--z-scrim);
+  background: rgb(12 20 24 / 46%);
+  /* Must NOT be pointer-events: none — the scrim IS the tap-outside target. */
+}
+.overlay-panel {
+  position: fixed; z-index: var(--z-panel);
+  background: var(--bg-surface); color: var(--text-primary);
+  display: flex; flex-direction: column;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 28%);
+}
+.overlay-modal {
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(760px, calc(100vw - 2rem));
+  max-height: min(85vh, 900px);
+  border-radius: var(--radius-lg);
+}
+.overlay-drawer {
+  top: 0; right: 0; bottom: 0;
+  width: min(560px, 100vw);
+  border-left: 1px solid var(--border-default);
+}
+.overlay-head {
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
+}
+.overlay-title { font-size: var(--font-size-lg); font-weight: 640; flex: 1 1 auto; min-width: 0; }
+.overlay-close {
+  /* At least 44x44 of hit area, inside the panel's own bounds. */
+  width: 44px; height: 44px; flex-shrink: 0;
+  border: 0; background: none; color: var(--text-secondary);
+  font-size: var(--font-size-xl); line-height: 1; cursor: pointer; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.overlay-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.overlay-close:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -3px; }
+.overlay-body { padding: var(--space-lg); overflow-y: auto; flex: 1 1 auto; }
+
+/* ── Glossary popover ────────────────────────────────────────────────────────────────── */
+.glossary-link {
+  border: 0; background: none; font: inherit; padding: 0; cursor: help;
+  color: inherit; border-bottom: 1px dotted var(--accent-primary);
+}
+.glossary-link::after { content: 'ℹ'; font-size: 0.7em; color: var(--accent-primary); vertical-align: super; margin-left: 1px; }
+.glossary-link:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.glossary-pop {
+  position: fixed; z-index: var(--z-popover);
+  background: var(--bg-surface); color: var(--text-primary);
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  padding: var(--space-md); max-width: min(320px, calc(100vw - 2rem));
+  box-shadow: 0 12px 32px rgb(0 0 0 / 20%);
+  font-size: var(--font-size-sm);
+}
+.glossary-term { font-weight: 640; margin-bottom: 3px; }
+
+/* ── Dossier ─────────────────────────────────────────────────────────────────────────── */
+.detail-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: var(--space-md); min-width: 0; }
+.detail-item { min-width: 0; }
+.detail-label { font-size: var(--font-size-xs); color: var(--text-tertiary); }
+.detail-value { font-family: var(--font-mono); font-size: var(--font-size-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-section { margin-top: var(--space-xl); }
+.detail-section-title { font-size: var(--font-size-sm); font-weight: 640; margin-bottom: var(--space-sm); color: var(--text-secondary); }
+.link-button {
+  border: 0; background: none; font: inherit; color: var(--accent-primary); cursor: pointer;
+  padding: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+.link-button:hover { text-decoration: underline; }
+
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--font-size-xs); font-weight: 600; color: #fff; }
+.pill-muted { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+
+.callout {
+  border-left: 3px solid var(--accent-primary);
+  background: var(--bg-elevated);
+  padding: var(--space-md); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--font-size-sm); color: var(--text-secondary);
+  margin-top: var(--space-md); max-width: 82ch;
+}
+.callout-warn { border-left-color: var(--accent-secondary); }
+.callout strong { color: var(--text-primary); }
+
+/* ── States ──────────────────────────────────────────────────────────────────────────── */
+.loading, .empty, .error-box { padding: var(--space-2xl); text-align: center; color: var(--text-tertiary); }
+.error-box { color: var(--status-bad); }
+.skeleton { background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-hover) 50%, var(--bg-elevated) 75%); background-size: 200% 100%; animation: pulse 1.4s ease-in-out infinite; border-radius: var(--radius-sm); height: 14px; }
+@keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.retry-button {
+  margin-top: var(--space-md); font: inherit; font-size: var(--font-size-sm);
+  padding: 6px 14px; border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  background: var(--bg-surface); color: var(--text-primary); cursor: pointer;
+}
+.retry-button:hover { background: var(--bg-hover); }
+
+/* ── Footer ──────────────────────────────────────────────────────────────────────────── */
+.site-footer { border-top: 1px solid var(--border-subtle); background: var(--bg-surface); margin-top: var(--space-2xl); }
+.footer-inner {
+  max-width: 1600px; margin: 0 auto; padding: var(--space-lg);
+  display: flex; flex-wrap: wrap; gap: var(--space-md) var(--space-lg);
+  align-items: center; justify-content: space-between;
+  font-size: var(--font-size-xs); color: var(--text-tertiary);
+}
+.footer-inner a { color: var(--accent-primary); text-decoration: none; }
+.footer-inner a:hover { text-decoration: underline; }
+.footer-source { max-width: 70ch; min-width: 0; }
+
+/* ── Small screens ───────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main-content { padding: var(--space-md); }
+  .header-inner { gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
+  .brand-sub { display: none; }
+  .search-wrap { flex: 1 1 100%; order: 3; }
+  .tabs { order: 4; flex: 1 1 100%; }
+  /* On a phone the frame is narrow and tall, so fitBounds becomes width-limited and shows the
+   * region's full longitude span, which is the right behaviour. */
+  .map-canvas { aspect-ratio: 0.85 / 1; max-height: 70vh; min-height: 380px; }
+  .panel { padding: var(--space-md); }
+  .view-title { font-size: var(--font-size-xl); }
+  .overlay-drawer { width: 100vw; }
+  .stat-row { gap: var(--space-sm); }
+}

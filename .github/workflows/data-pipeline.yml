@@ -1,0 +1,57 @@
+name: Data Pipeline
+
+on:
+  schedule:
+    # Source cadence: IBTrACS v04r01 is republished by NOAA NCEI periodically as seasons are
+    # reanalysed — not continuously, and not on a fixed calendar. Monthly is already faster
+    # than the archive moves and is the fastest cadence this factory permits.
+    # Staggered to day 9 at an off-hour minute so repos do not all fire together.
+    - cron: '23 4 9 * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['pipeline/**']
+
+permissions:
+  contents: write
+  # Required so the final step can dispatch deploy.yml. Without this the data commit lands
+  # and the site never rebuilds.
+  actions: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node pipeline/collect.mjs
+      - run: node pipeline/aggregate.mjs
+
+      - name: Commit data
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # public/data is regenerated in full every run, so a rebase would conflict on every
+          # generated file the moment two runs overlap. Reset onto origin instead.
+          git fetch origin main
+          git reset --soft origin/main
+          git add public/data/
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Update cyclone data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A push made with GITHUB_TOKEN does NOT trigger other workflows — GitHub's loop
+      # prevention. Without this dispatch the job goes green, the commit lands, and the live
+      # site keeps serving stale data indefinitely with no failure reported anywhere.
+      - name: Trigger deploy
+        if: steps.commit.outputs.changed == 'true'
+        run: gh workflow run deploy.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
