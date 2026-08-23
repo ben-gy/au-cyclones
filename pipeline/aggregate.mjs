@@ -4,7 +4,7 @@
 // Turn the cached IBTrACS basin files into the JSON the site loads. Runs the gates in
 // gates.mjs and exits non-zero if any non-advisory gate fails, so a bad build never ships.
 
-import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile, access } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -24,7 +24,24 @@ import { SOURCES } from './sources.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CACHE = join(ROOT, 'pipeline', 'cache');
 const OUT = join(ROOT, 'public', 'data');
+const SHIPPED_GEO = join(OUT, 'au-states.geojson');
+/** Only present when this project sits inside the factory checkout. */
 const FACTORY_GEO = join(ROOT, '..', '..', 'patterns', 'geo', 'au-states.geojson');
+
+/**
+ * The committed copy in public/data is the source of truth, so the repository is
+ * self-contained and the pipeline runs in CI. The factory path is a convenience for seeding
+ * that copy the first time, and is absent everywhere else — reading it unconditionally made
+ * the pipeline fail on the first CI run with ENOENT on a path outside the checkout.
+ */
+async function boundaryPath() {
+  try {
+    await access(SHIPPED_GEO);
+    return SHIPPED_GEO;
+  } catch {
+    return FACTORY_GEO;
+  }
+}
 
 /** Round to a fixed number of decimals, preserving null. Track coordinates at 2 decimals are
  *  ~1.1 km, far finer than best-track position uncertainty, and it halves the payload. */
@@ -66,7 +83,8 @@ async function main() {
   ].sort();
 
   // --- Locate coast crossings against real ABS geometry ------------------------------
-  const boundaries = JSON.parse(await readFile(FACTORY_GEO, 'utf8'));
+  const geoPath = await boundaryPath();
+  const boundaries = JSON.parse(await readFile(geoPath, 'utf8'));
   const locate = buildStateLocator(boundaries);
   for (const storm of storms) {
     storm.landfallState = null;
@@ -348,7 +366,7 @@ async function main() {
     })
   );
   await writeFile(join(OUT, 'meta.json'), JSON.stringify(meta, null, 2));
-  await copyFile(FACTORY_GEO, join(OUT, 'au-states.geojson'));
+  if (geoPath !== SHIPPED_GEO) await copyFile(geoPath, SHIPPED_GEO);
 
   if (failed.length) {
     process.stderr.write(`\naggregate FAILED ${failed.length} gate(s):\n`);
