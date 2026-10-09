@@ -1,10 +1,8 @@
 {
-  "generated": "2026-09-09T09:01:18.625Z",
-  "completeThroughSeason": 2025,
-  "completeThroughLabel": "2024-25",
-  "provisionalSeasons": [
-    2026
-  ],
+  "generated": "2026-10-09T11:23:52.543Z",
+  "completeThroughSeason": 2026,
+  "completeThroughLabel": "2025-26",
+  "provisionalSeasons": [],
   "satelliteEraStart": 1982,
   "severeHpa": 970,
   "pressureClasses": [
@@ -35,21 +33,21 @@
     }
   ],
   "counts": {
-    "systems": 1632,
-    "tropical": 1284,
-    "named": 798,
-    "distinctNames": 592,
-    "points": 97378,
-    "crossings": 716,
-    "seasons": 127,
-    "withRadii": 257
+    "systems": 1635,
+    "tropical": 1300,
+    "named": 799,
+    "distinctNames": 593,
+    "points": 98185,
+    "crossings": 717,
+    "seasons": 128,
+    "withRadii": 272
   },
   "firstSeasonLabel": "1880-81",
   "trend": {
     "from": 1982,
-    "to": 2025,
-    "countPerDecade": -0.57,
-    "severePerDecade": -0.57
+    "to": 2026,
+    "countPerDecade": -0.46,
+    "severePerDecade": -0.47
   },
   "eras": [
     {
@@ -73,25 +71,25 @@
       "seasons": 15,
       "storms": 208,
       "perSeason": 13.87,
-      "measured": 171,
-      "coverage": 82.2,
+      "measured": 172,
+      "coverage": 82.7,
       "severe": 65,
       "severePerSeason": 4.33,
-      "severeShareOfMeasured": 38,
+      "severeShareOfMeasured": 37.8,
       "medianMinPressure": 980
     },
     {
       "from": 2012,
-      "to": 2025,
-      "label": "2012-25",
-      "seasons": 14,
-      "storms": 175,
-      "perSeason": 12.5,
-      "measured": 160,
-      "coverage": 91.4,
-      "severe": 53,
-      "severePerSeason": 3.79,
-      "severeShareOfMeasured": 33.1,
+      "to": 2026,
+      "label": "2012-26",
+      "seasons": 15,
+      "storms": 191,
+      "perSeason": 12.73,
+      "measured": 175,
+      "coverage": 91.6,
+      "severe": 60,
+      "severePerSeason": 4,
+      "severeShareOfMeasured": 34.3,
       "medianMinPressure": 985
     }
   ],
@@ -175,7 +173,7 @@
     {
       "name": "reconcile:season counts sum to tropical storms",
       "pass": true,
-      "detail": "seasons sum 1284 vs tropical storms 1284",
+      "detail": "seasons sum 1300 vs tropical storms 1300",
       "advisory": false
     },
     {
@@ -187,7 +185,7 @@
     {
       "name": "provisional:analysed record ends on a measured season",
       "pass": true,
-      "detail": "last analysed season 2024-25 has 15 measured of 16",
+      "detail": "last analysed season 2025-26 has 15 measured of 16",
       "advisory": false
     },
     {
@@ -199,37 +197,37 @@
     {
       "name": "headline:pressure coverage did not fall",
       "pass": true,
-      "detail": "coverage 80.6% (1982-96) -> 91.4% (2012-2025)",
+      "detail": "coverage 80.6% (1982-96) -> 91.6% (2012-2026)",
       "advisory": false
     },
     {
       "name": "coast:crossings assigned to a state",
       "pass": true,
-      "detail": "676 of 716 crossings located (94.4%)",
+      "detail": "678 of 717 crossings located (94.6%)",
       "advisory": false
     },
     {
       "name": "reconcile:state crossings sum to located crossings",
       "pass": true,
-      "detail": "state table 676 vs located 676",
+      "detail": "state table 678 vs located 678",
       "advisory": false
     },
     {
       "name": "scale:storms",
       "pass": true,
-      "detail": "1632 systems",
+      "detail": "1635 systems",
       "advisory": false
     },
     {
       "name": "scale:points",
       "pass": true,
-      "detail": "97378 track points",
+      "detail": "98185 track points",
       "advisory": false
     },
     {
       "name": "scale:seasons",
       "pass": true,
-      "detail": "127 seasons with a tropical cyclone",
+      "detail": "128 seasons with a tropical cyclone",
       "advisory": false
     }
   ]
